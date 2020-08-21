@@ -24,32 +24,20 @@ var (
 )
 
 func TestInjectNATSRootSpan(t *testing.T) {
-	span, rec, _ := createSpanAndRecorder()
+	span, rec, tr := createSpanAndRecorder()
+	childSpan, _ := tr.StartSpanFromContext(zipkin.NewContext(context.Background(), span), spanName)
 	defer rec.Close()
 
-	marshalledMessage, _ := json.Marshal(testMessageData)
-	msg := nats.Msg{Data: marshalledMessage}
+	t.Run("RootSpan", func(t *testing.T) {
+		InjectNATSSpanTest(t, span)
+	})
 
-	sc := span.Context()
-	_ = InjectNATS(&msg)(sc)
-
-	var payload natsMessageWithContext
-	_ = json.Unmarshal(msg.Data, &payload)
-
-	if bytes.Compare(marshalledMessage, payload.Data) != 0 {
-		t.Fatal("Message data is corrupted")
-	}
-
-	extractedSc, _ := payload.Sc.Extract()
-
-	compareSpanContexts(t, extractedSc, &sc)
+	t.Run("ChildSpan", func(t *testing.T) {
+		InjectNATSSpanTest(t, childSpan)
+	})
 }
 
-func TestInjectNATSChildSpan(t *testing.T) {
-	parentSpan, rec, tr := createSpanAndRecorder()
-	span, _ := tr.StartSpanFromContext(zipkin.NewContext(context.Background(), parentSpan), spanName)
-	defer rec.Close()
-
+func InjectNATSSpanTest(t *testing.T, span zipkin.Span) {
 	marshalledMessage, _ := json.Marshal(testMessageData)
 	msg := nats.Msg{Data: marshalledMessage}
 
@@ -69,9 +57,20 @@ func TestInjectNATSChildSpan(t *testing.T) {
 }
 
 func TestExtractNATSRootSpan(t *testing.T) {
-	span, rec, _ := createSpanAndRecorder()
+	span, rec, tr := createSpanAndRecorder()
+	childSpan, _ := tr.StartSpanFromContext(zipkin.NewContext(context.Background(), span), spanName)
 	defer rec.Close()
 
+	t.Run("RootSpan", func(t *testing.T) {
+		ExtractNATSSpanTest(t, span)
+	})
+
+	t.Run("ChildSpan", func(t *testing.T) {
+		ExtractNATSSpanTest(t, childSpan)
+	})
+}
+
+func ExtractNATSSpanTest(t *testing.T, span zipkin.Span) {
 	mappedSc := make(b3.Map)
 	sc := span.Context()
 	_ = mappedSc.Inject()(sc)
