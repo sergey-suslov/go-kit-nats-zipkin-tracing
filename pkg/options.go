@@ -2,21 +2,42 @@ package pkg
 
 import (
 	"github.com/go-kit/kit/log"
-	"net/http"
 )
 
 type TracerOption func(o *tracerOptions)
 
 type tracerOptions struct {
-	tags           map[string]string
-	name           string
-	logger         log.Logger
-	propagate      bool
-	requestSampler func(r *http.Request) bool
+	tags      map[string]string
+	name      string
+	logger    log.Logger
+	propagate bool
 }
 
-func SetName(name string) TracerOption {
+// All the TracerOption functions below were taken from the tracing/zipkin/options.go file of the go-kit repo
+func Name(name string) TracerOption {
 	return func(o *tracerOptions) {
 		o.name = name
+	}
+}
+
+func Tags(tags map[string]string) TracerOption {
+	return func(o *tracerOptions) {
+		for k, v := range tags {
+			o.tags[k] = v
+		}
+	}
+}
+
+func Logger(logger log.Logger) TracerOption {
+	return func(o *tracerOptions) {
+		if logger != nil {
+			o.logger = logger
+		}
+	}
+}
+
+func AllowPropagation(propagate bool) TracerOption {
+	return func(o *tracerOptions) {
+		o.propagate = propagate
 	}
 }
