@@ -25,7 +25,7 @@ func ExtractNATS(msg *nats.Msg) propagation.Extractor {
 			return nil, nil
 		}
 
-		//msg.Data = payload.Data
+		msg.Data = payload.Data
 
 		sc, err := payload.Sc.Extract()
 		if err != nil {

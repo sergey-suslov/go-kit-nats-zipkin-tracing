@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/nats-io/nats.go"
@@ -26,14 +27,18 @@ func TestInjectNATSRootSpan(t *testing.T) {
 	span, rec, _ := createSpanAndRecorder()
 	defer rec.Close()
 
-	marshaledMessage, _ := json.Marshal(testMessageData)
-	msg := nats.Msg{Data: marshaledMessage}
+	marshalledMessage, _ := json.Marshal(testMessageData)
+	msg := nats.Msg{Data: marshalledMessage}
 
 	sc := span.Context()
 	_ = InjectNATS(&msg)(sc)
 
 	var payload natsMessageWithContext
 	_ = json.Unmarshal(msg.Data, &payload)
+
+	if bytes.Compare(marshalledMessage, payload.Data) != 0 {
+		t.Fatal("Message data is corrupted")
+	}
 
 	extractedSc, _ := payload.Sc.Extract()
 
@@ -53,6 +58,10 @@ func TestInjectNATSChildSpan(t *testing.T) {
 
 	var payload natsMessageWithContext
 	_ = json.Unmarshal(msg.Data, &payload)
+
+	if bytes.Compare(marshalledMessage, payload.Data) != 0 {
+		t.Fatal("Message data is corrupted")
+	}
 
 	extractedSc, _ := payload.Sc.Extract()
 
@@ -77,6 +86,10 @@ func TestExtractNATSRootSpan(t *testing.T) {
 	}
 
 	extractedSc, _ := ExtractNATS(msg)()
+
+	if bytes.Compare(marshalledTestMessageData, msg.Data) != 0 {
+		t.Fatal("Message data is corrupted")
+	}
 
 	if extractedSc == nil {
 		t.Fatalf("Extracted context is nil")
