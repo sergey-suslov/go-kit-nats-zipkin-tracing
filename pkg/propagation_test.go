@@ -6,6 +6,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
+	"github.com/openzipkin/zipkin-go/propagation/b3"
 	"github.com/openzipkin/zipkin-go/reporter/recorder"
 	"testing"
 )
@@ -31,7 +32,7 @@ func TestInjectNATSRootSpan(t *testing.T) {
 	sc := span.Context()
 	_ = InjectNATS(&msg)(sc)
 
-	var payload natsMessageWithContextOnInjection
+	var payload natsMessageWithContext
 	_ = json.Unmarshal(msg.Data, &payload)
 
 	extractedSc, _ := payload.Sc.Extract()
@@ -44,16 +45,42 @@ func TestInjectNATSChildSpan(t *testing.T) {
 	span, _ := tr.StartSpanFromContext(zipkin.NewContext(context.Background(), parentSpan), spanName)
 	defer rec.Close()
 
-	marshaledMessage, _ := json.Marshal(testMessageData)
-	msg := nats.Msg{Data: marshaledMessage}
+	marshalledMessage, _ := json.Marshal(testMessageData)
+	msg := nats.Msg{Data: marshalledMessage}
 
 	sc := span.Context()
 	_ = InjectNATS(&msg)(sc)
 
-	var payload natsMessageWithContextOnInjection
+	var payload natsMessageWithContext
 	_ = json.Unmarshal(msg.Data, &payload)
 
 	extractedSc, _ := payload.Sc.Extract()
+
+	compareSpanContexts(t, extractedSc, &sc)
+}
+
+func TestExtractNATSRootSpan(t *testing.T) {
+	span, rec, _ := createSpanAndRecorder()
+	defer rec.Close()
+
+	mappedSc := make(b3.Map)
+	sc := span.Context()
+	_ = mappedSc.Inject()(sc)
+	marshalledTestMessageData, _ := json.Marshal(testMessageData)
+	marshalledMessage, _ := json.Marshal(&natsMessageWithContext{
+		Sc:   mappedSc,
+		Data: marshalledTestMessageData,
+	})
+
+	msg := &nats.Msg{
+		Data: marshalledMessage,
+	}
+
+	extractedSc, _ := ExtractNATS(msg)()
+
+	if extractedSc == nil {
+		t.Fatalf("Extracted context is nil")
+	}
 
 	compareSpanContexts(t, extractedSc, &sc)
 }
