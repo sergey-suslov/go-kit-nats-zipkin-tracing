@@ -53,7 +53,6 @@ func NATSSubscriberTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats
 
 	subscriberAfter := kitnats.SubscriberAfter(
 		func(ctx context.Context, conn *nats.Conn) context.Context {
-			// TODO trace errors somehow
 			if span := zipkin.SpanFromContext(ctx); span != nil {
 				span.Finish()
 			}
