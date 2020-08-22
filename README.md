@@ -12,6 +12,6 @@ type natsMessageWithContext struct {
 ````
 Data field holds marshalled `nats.Msg.Data`.
 
-**Make sure** to use `NATSPublisherTrace` endpoints only with enpoints that use `NATSSubscriberTrace` to deserialize messages properly. Or use `AllowPropagation` option to disallow propagation.
+**Make sure** to use `NATSPublisherTrace` endpoints only with endpoints that use `NATSSubscriberTrace` to deserialize messages properly. Or use `AllowPropagation` option to disallow propagation.
 
  
