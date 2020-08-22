@@ -99,12 +99,40 @@ func ExtractNATSSpanTest(t *testing.T, span zipkin.Span) {
 	compareSpanContexts(t, extractedSc, &sc)
 }
 
-func createSpanAndRecorder() (zipkin.Span, *recorder.ReporterRecorder, *zipkin.Tracer) {
+func ExtractNATSSpanRegularMessageTest(t *testing.T, span zipkin.Span) {
+	mappedSc := make(b3.Map)
+	sc := span.Context()
+	_ = mappedSc.Inject()(sc)
+	marshalledTestMessageData, _ := json.Marshal(testMessageData)
+
+	msg := &nats.Msg{
+		Data: marshalledTestMessageData,
+	}
+
+	extractedSc, _ := ExtractNATS(msg)()
+
+	if bytes.Compare(marshalledTestMessageData, msg.Data) != 0 {
+		t.Fatal("Message data is corrupted")
+	}
+
+	if extractedSc == nil {
+		t.Fatalf("Extracted context is nil")
+	}
+
+	compareSpanContexts(t, extractedSc, &sc)
+}
+
+func createTracer() (*zipkin.Tracer, *recorder.ReporterRecorder) {
 	rec := recorder.NewReporter()
 	tr, _ := zipkin.NewTracer(
 		rec,
 		zipkin.WithSharedSpans(false),
 	)
+	return tr, rec
+}
+
+func createSpanAndRecorder() (zipkin.Span, *recorder.ReporterRecorder, *zipkin.Tracer) {
+	tr, rec := createTracer()
 	span := tr.StartSpan(spanName)
 	return span, rec, tr
 }

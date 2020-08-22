@@ -21,7 +21,7 @@ func ExtractNATS(msg *nats.Msg) propagation.Extractor {
 	return func() (*model.SpanContext, error) {
 		var payload natsMessageWithContext
 		err := json.Unmarshal(msg.Data, &payload)
-		if err != nil {
+		if err != nil || payload.Data == nil && payload.Sc == nil {
 			return nil, nil
 		}
 
