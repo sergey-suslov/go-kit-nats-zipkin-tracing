@@ -63,6 +63,9 @@ func NATSSubscriberTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats
 
 	finalizer := kitnats.SubscriberFinalizer(func(ctx context.Context, msg *nats.Msg) {
 		if span := zipkin.SpanFromContext(ctx); span != nil {
+			if config.errChecker != nil {
+				checkForErrorAndWriteSpanTag(span, msg, config.errChecker)
+			}
 			span.Finish()
 			span.Flush()
 		}
