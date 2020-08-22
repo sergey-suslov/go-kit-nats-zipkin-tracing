@@ -1,4 +1,4 @@
-package pkg
+package natszipkin
 
 import (
 	"github.com/go-kit/kit/log"

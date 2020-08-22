@@ -1,4 +1,4 @@
-package pkg
+package natszipkin
 
 import (
 	"encoding/json"
