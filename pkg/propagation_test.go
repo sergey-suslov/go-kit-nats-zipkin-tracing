@@ -12,12 +12,14 @@ import (
 	"testing"
 )
 
+type testMessageModel struct {
+	Name string
+	Id   int32
+}
+
 var (
 	spanName        = "test-span"
-	testMessageData = struct {
-		Name string
-		Id   int32
-	}{
+	testMessageData = testMessageModel{
 		Name: "bob",
 		Id:   1,
 	}
@@ -99,7 +101,10 @@ func ExtractNATSSpanTest(t *testing.T, span zipkin.Span) {
 
 func createSpanAndRecorder() (zipkin.Span, *recorder.ReporterRecorder, *zipkin.Tracer) {
 	rec := recorder.NewReporter()
-	tr, _ := zipkin.NewTracer(rec)
+	tr, _ := zipkin.NewTracer(
+		rec,
+		zipkin.WithSharedSpans(false),
+	)
 	span := tr.StartSpan(spanName)
 	return span, rec, tr
 }
