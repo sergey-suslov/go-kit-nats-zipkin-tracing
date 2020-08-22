@@ -52,7 +52,7 @@ func NATSSubscriberTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats
 
 		span := tracer.StartSpan(
 			name,
-			zipkin.Kind(model.Server),
+			zipkin.Kind(model.Consumer),
 			zipkin.Tags(config.tags),
 			zipkin.Parent(spanContext),
 			zipkin.FlushOnFinish(false),
@@ -128,7 +128,7 @@ func NATSPublisherTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats.
 
 		span := tracer.StartSpan(
 			name,
-			zipkin.Kind(model.Client),
+			zipkin.Kind(model.Producer),
 			zipkin.Tags(config.tags),
 			zipkin.Parent(spanContext),
 			zipkin.FlushOnFinish(false),

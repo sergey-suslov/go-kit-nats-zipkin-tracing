@@ -168,8 +168,8 @@ func TestNATSPublisherTraceSuccess(t *testing.T) {
 	if len(spans) != 1 {
 		t.Fatalf("there must be only one span, found %d", len(spans))
 	}
-	if spans[0].Kind != model.Client {
-		t.Fatalf("the span must have Kind set to Client, found %s", spans[0].Kind)
+	if spans[0].Kind != model.Producer {
+		t.Fatalf("the span must have Kind set to Consumer, found %s", spans[0].Kind)
 	}
 	compareTags(t, testTags, spans[0].Tags)
 }
