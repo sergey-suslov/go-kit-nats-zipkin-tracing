@@ -188,7 +188,7 @@ func makeFakeNATSRequest(opts ...TracerOption) ([]model.SpanModel, []byte, []byt
 
 	response := make(chan []byte, 1)
 
-	handler := createTransparentHandler(NATSSubscriberTrace(tr, opts...), response)
+	handler := createEmptyHandler(NATSSubscriberTrace(tr, opts...), response)
 
 	testMessageWithContext, testMessage := createTestNatsMessageData(span)
 	msg := &nats.Msg{
@@ -211,7 +211,7 @@ func makeFakeNATSRequestWithoutSpan(opts ...TracerOption) ([]model.SpanModel, []
 
 	response := make(chan []byte, 1)
 
-	handler := createTransparentHandler(NATSSubscriberTrace(tr, opts...), response)
+	handler := createEmptyHandler(NATSSubscriberTrace(tr, opts...), response)
 
 	testMessage, _ := json.Marshal(testMessageData)
 	msg := &nats.Msg{
@@ -227,7 +227,7 @@ func makeFakeNATSRequestWithoutSpan(opts ...TracerOption) ([]model.SpanModel, []
 	return spans, testMessage, res
 }
 
-func createTransparentHandler(o kitnats.SubscriberOption, response chan<- []byte) *kitnats.Subscriber {
+func createEmptyHandler(o kitnats.SubscriberOption, response chan<- []byte) *kitnats.Subscriber {
 	return kitnats.NewSubscriber(
 		func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			return request, nil

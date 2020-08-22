@@ -12,16 +12,17 @@ import (
 var ErrEmptyContext = errors.New("empty request context")
 
 type natsMessageWithContext struct {
-	Sc   b3.Map `json:"sc"`
+	Sc   b3.Map `json:"natsSpanContextB3Map"`
 	Data []byte `json:"data"`
 }
 
-// ExtractNATS will extract a span.Context from a NATS message.
+// ExtractNATS will extract a span.Context from a NATS message, using b3.Map
+// Extract method. Ignores message if it has not span context.
 func ExtractNATS(msg *nats.Msg) propagation.Extractor {
 	return func() (*model.SpanContext, error) {
 		var payload natsMessageWithContext
 		err := json.Unmarshal(msg.Data, &payload)
-		if err != nil || payload.Data == nil && payload.Sc == nil {
+		if err != nil || payload.Sc == nil {
 			return nil, nil
 		}
 
@@ -44,7 +45,8 @@ func ExtractNATS(msg *nats.Msg) propagation.Extractor {
 	}
 }
 
-// InjectNATS will inject a span.Context into NATS message.
+// InjectNATS will inject a span.Context into NATS message as a b3.Map, using
+// b3.Map Inject method.
 func InjectNATS(msg *nats.Msg) propagation.Injector {
 	return func(sc model.SpanContext) error {
 		if (model.SpanContext{}) == sc {
