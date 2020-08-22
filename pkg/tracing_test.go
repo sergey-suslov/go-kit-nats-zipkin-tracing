@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	kitnats "github.com/go-kit/kit/transport/nats"
 	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/openzipkin/zipkin-go/propagation/b3"
+	"strings"
 	"testing"
 	"time"
 )
@@ -94,6 +96,19 @@ func TestNATSSubscriberTraceSuccessWithRegularMessage(t *testing.T) {
 
 	if spans[0].ParentID != nil {
 		t.Fatalf("child span must have ParentId equals to nil, found %s", spans[1].ID)
+	}
+}
+
+func TestNATSSubscriberTraceSuccessWithErrorChecker(t *testing.T) {
+	var (
+		spanName  = "test-span-name"
+		testError = errors.New("test error")
+	)
+	spans, _, _ := makeFakeNATSRequestWithoutSpan(Name(spanName), ErrChecker(func(msg *nats.Msg) error {
+		return testError
+	}))
+	if strings.Compare(spans[0].Tags[string(zipkin.TagError)], testError.Error()) != 0 {
+		t.Fatalf("error tag must be presented")
 	}
 }
 
