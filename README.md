@@ -1,7 +1,7 @@
 # Go Kit NATS Zipkin Tracing
 This package implements native zipkin tracing for NATS transport (Subscriber and Publisher) of Go Kit toolkit.
 
-###Context transfer
+### Context transfer
 This package transfers the span context inside of a NATS message as a separate field `natsSpanContextB3Map`. **b3.Map**'s `Inject`, `Extract` methods handle Serialization and deserialization of the context.  
 The `nats.Msg.Data` object structure to pass data and the context:
 ````
