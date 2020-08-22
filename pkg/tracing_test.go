@@ -35,6 +35,25 @@ func TestNATSSubscriberTraceSuccess(t *testing.T) {
 	}
 }
 
+func TestNATSSubscriberTraceSuccessWithRegularMessage(t *testing.T) {
+	var (
+		spanName = "test-span-name"
+	)
+	spans, testMessage, res := makeFakeNATSRequestWithoutSpan(Name(spanName))
+
+	if bytes.Compare(testMessage, res) != 0 {
+		t.Fatal("Data was corrupted during the request")
+	}
+
+	if len(spans) != 1 {
+		t.Fatalf("spans len equals to %d, t be 1", len(spans))
+	}
+
+	if spans[0].ParentID != nil {
+		t.Fatalf("child span must have ParentId equals to nil, found %s", spans[1].ID)
+	}
+}
+
 func TestNATSSubscriberTraceOptions(t *testing.T) {
 	var (
 		spanName = "test-span-name"
@@ -56,7 +75,6 @@ func TestNATSSubscriberTraceOptions(t *testing.T) {
 
 func makeFakeNATSRequest(opts ...TracerOption) ([]model.SpanModel, []byte, []byte) {
 	span, rec, tr := createSpanAndRecorder()
-
 	defer rec.Close()
 
 	response := make(chan []byte, 1)
@@ -68,12 +86,33 @@ func makeFakeNATSRequest(opts ...TracerOption) ([]model.SpanModel, []byte, []byt
 		Data:  testMessageWithContext,
 		Reply: "anywhere",
 	}
-
 	var nc *nats.Conn
 	handler.ServeMsg(nc)(msg)
 
 	res := <-response
 	span.Finish()
+
+	spans := rec.Flush()
+	return spans, testMessage, res
+}
+
+func makeFakeNATSRequestWithoutSpan(opts ...TracerOption) ([]model.SpanModel, []byte, []byte) {
+	tr, rec := createTracer()
+	defer rec.Close()
+
+	response := make(chan []byte, 1)
+
+	handler := createTransparentHandler(NATSSubscriberTrace(tr, opts...), response)
+
+	testMessage, _ := json.Marshal(testMessageData)
+	msg := &nats.Msg{
+		Data:  testMessage,
+		Reply: "anywhere",
+	}
+	var nc *nats.Conn
+	handler.ServeMsg(nc)(msg)
+
+	res := <-response
 
 	spans := rec.Flush()
 	return spans, testMessage, res
