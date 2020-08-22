@@ -1,4 +1,4 @@
-module sergey-suslov/go-kit-nats-zipkin-tracing
+module github.com/sergey-suslov/go-kit-nats-zipkin-tracing
 
 go 1.14
 
