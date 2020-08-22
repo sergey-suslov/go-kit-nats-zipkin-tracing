@@ -121,8 +121,10 @@ func NATSPublisherTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats.
 	})
 
 	publisherAfter := kitnats.PublisherAfter(func(ctx context.Context, msg *nats.Msg) context.Context {
-		// TODO trace errors somehow
 		if span := zipkin.SpanFromContext(ctx); span != nil {
+			if config.errChecker != nil {
+				checkForErrorAndWriteSpanTag(span, msg, config.errChecker)
+			}
 			span.Finish()
 			span.Flush()
 		}
@@ -133,5 +135,11 @@ func NATSPublisherTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats.
 	return func(publisher *kitnats.Publisher) {
 		publisherBefore(publisher)
 		publisherAfter(publisher)
+	}
+}
+
+func checkForErrorAndWriteSpanTag(span zipkin.Span, msg *nats.Msg, checker ErrorChecker) {
+	if err := checker(msg); err != nil {
+		zipkin.TagError.Set(span, err.Error())
 	}
 }
