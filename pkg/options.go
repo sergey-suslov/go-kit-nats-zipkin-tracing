@@ -45,6 +45,9 @@ func AllowPropagation(propagate bool) TracerOption {
 	}
 }
 
+// ErrChecker allows setting of errChecker function. This function, if present,
+// will be used to check response message on errors. If if returns an error, zipkin.TagError
+// tag will be added to a span.
 func ErrChecker(checker ErrorChecker) TracerOption {
 	return func(o *tracerOptions) {
 		o.errChecker = checker

@@ -9,6 +9,16 @@ import (
 	"github.com/openzipkin/zipkin-go/model"
 )
 
+// NATSSubscriberTrace enables native Zipkin tracing of a Go kit NATS transport
+// Subscriber.
+//
+// Go kit creates NATS transport subscriber per remote endpoint. This option
+// will create a span on every request. This option will also transform every
+// nats.Msg, parsing it as natsMessageWithContext and passing Data value as
+// nats.Msg Data further or will ignore it if nats.Msg Data is not the shape
+// of natsMessageWithContext. The option will parse span context from the
+// nats.Msg Data and use it as the parent context. It is safe using this option
+// with the endpoints that may send not natsMessageWithContext typed messages.
 func NATSSubscriberTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats.SubscriberOption {
 	config := tracerOptions{
 		tags:      make(map[string]string),
@@ -77,6 +87,17 @@ func NATSSubscriberTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats
 	}
 }
 
+// NATSPublisherTrace enables native Zipkin tracing of a Go kit NATS transport
+// Publisher.
+//
+// Go kit creates NATS transport publisher per remote endpoint. This option
+// will create a span on every request. This option will also transform every
+// sending nats.Msg, moving nats.Msg.Data into a separate field (Data) in the
+// natsMessageWithContext struct. This middleware will also create a span on
+// every request and add its context (using Inject method of b3.Map) to the
+// nats.Msg as Sc field. In case of sending a request to a service that is not
+// using NATSSubscriberTrace option, use AllowPropagation TracerOption to
+// disallow propagation.
 func NATSPublisherTrace(tracer *zipkin.Tracer, options ...TracerOption) kitnats.PublisherOption {
 	config := tracerOptions{
 		tags:      make(map[string]string),
